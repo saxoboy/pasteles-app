@@ -3,6 +3,7 @@ import Header from "../src/components/Header";
 import Footer from "../src/components/Footer";
 
 /*NUI*/
+import Box from "@material-ui/core/Box";
 import Container from "@material-ui/core/Container";
 
 const Layout = props => {
@@ -10,7 +11,9 @@ const Layout = props => {
     <>
       <Header />
       <main>
-        <Container>{props.children}</Container>
+        <Box py={4}>
+          <Container>{props.children}</Container>
+        </Box>
       </main>
       <Footer />
     </>
