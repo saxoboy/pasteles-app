@@ -1,5 +1,8 @@
 import React, { useState, useContext } from "react";
-import Router from "next/router";
+import { useRouter } from "next/router";
+
+import FileUploader from "react-firebase-file-uploader";
+
 import Layout from "../layout/Layout";
 import { useForm } from "../hooks/useForm";
 import validarProducto from "../utils/validarProducto";
@@ -25,6 +28,7 @@ const initialState = {
   nombre: "",
   descripcion: "",
   slug: "",
+  imagen: "",
   categorias: []
 };
 
@@ -51,6 +55,12 @@ const NuevoProducto = () => {
   const [open, setOpen] = useState(true); //para el error
   const [error, setError] = useState(false); //para el crear usuario
 
+  // state de las imagenes
+  const [nombreimagen, guardarNombre] = useState("");
+  const [subiendo, guardarSubiendo] = useState(false);
+  const [progreso, guardarProgreso] = useState(0);
+  const [urlimagen, guardarUrlImagen] = useState("");
+
   // Manejo del form // Validación // Errores
   const { onChange, onSelect, onSubmit, values, errores } = useForm(
     crearProducto,
@@ -64,20 +74,68 @@ const NuevoProducto = () => {
   // context con las operaciones crud de firebase
   const { usuario, firebase } = useContext(FirebaseContext);
 
+  //hook del Router para redireccionar
+  const router = useRouter();
+
   //Función Secundaria
   async function crearProducto() {
     // si el usuario no esta autenticado es llevado al login
     if (!usuario) {
-      alert("ups.. necesitas estar antes logeado")
-      return Router.push("/login");
+      alert("ups.. necesitas estar antes logeado");
+      return router.push("/login");
     }
-    // ingresamos la info
-    try {
-      console.log(values);
-    } catch (error) {
+    if (!error) {
+      console.log(error);
+      //creamos el producto
+      const producto = {
+        nombre,
+        descripcion,
+        slug,
+        urlimagen,
+        categorias,
+        votos: 0,
+        comentarios: [],
+        creado: Date.now(),
+        creador: {
+          id: usuario.uid,
+          nombre: usuario.displayName
+        }
+      };
+      console.log(producto);
+      // insertarlo en la base de datos
+      await firebase.db.collection("productos").add(producto);
+      //Redirigiendo al index
+      return router.push("/")
+    } else {
       console.log("Existe un error", error.message);
     }
   }
+
+  const handleUploadStart = () => {
+    guardarProgreso(0);
+    guardarSubiendo(true);
+  };
+
+  const handleProgress = progreso => guardarProgreso({ progreso });
+
+  const handleUploadError = error => {
+    guardarSubiendo(error);
+    console.error(error);
+  };
+
+  const handleUploadSuccess = nombre => {
+    guardarProgreso(100);
+    guardarSubiendo(false);
+    guardarNombre(nombre);
+    firebase.storage
+      .ref("productos")
+      .child(nombre)
+      .getDownloadURL()
+      .then(url => {
+        console.log(url);
+        guardarUrlImagen(url);
+      });
+  };
 
   return (
     <Layout>
@@ -178,6 +236,19 @@ const NuevoProducto = () => {
                 required
                 multiline
                 fullWidth
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <FileUploader
+                accept="image/*"
+                id="imagen"
+                name="imagen"
+                randomizeFilename
+                storageRef={firebase.storage.ref("productos")}
+                onUploadStart={handleUploadStart}
+                onUploadError={handleUploadError}
+                onUploadSuccess={handleUploadSuccess}
+                onProgress={handleProgress}
               />
             </Grid>
             <Grid item xs={12}>
