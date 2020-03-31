@@ -27,7 +27,8 @@ export const useForm = (callback, initialState, validar = {}) => {
     event.preventDefault();
     const erroresValidacion = validar(values);
     setErrores(erroresValidacion);
-    callback();
+    setSubmitForm(true);
+    //callback();
   };
 
   return {

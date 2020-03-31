@@ -20,7 +20,12 @@ class Firebase {
     const nuevoUsuario = await this.auth.createUserWithEmailAndPassword(
       email,
       password
-    );
+    ).catch((error) => {
+      // Handle Errors here.
+      var errorCode = error.code;
+      var errorMessage = error.message;
+      console.log(errorCode + errorMessage);
+    });
 
     return await nuevoUsuario.user.updateProfile({
       displayName: nombre
@@ -29,12 +34,17 @@ class Firebase {
 
   // Inicia sesión del usuario
   async login(email, password) {
-    return this.auth.signInWithEmailAndPassword(email, password);
+    return await this.auth.signInWithEmailAndPassword(email, password);
   }
 
   // Cierra la sesión del usuario
   async cerrarSesion() {
-    await this.auth.signOut();
+    await this.auth.signOut()
+    .then(() => {
+      console.log("Haz salido...");
+    }).catch( error => {
+      console.log("hay un error...");
+    });
   }
 }
 const firebase = new Firebase();

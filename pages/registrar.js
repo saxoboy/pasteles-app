@@ -43,6 +43,7 @@ const Registrar = () => {
     validarCrearCuenta
   );
   const { nombres, email, password } = values;
+  console.log(values);
 
   async function registrarUsuario() {
     try {
